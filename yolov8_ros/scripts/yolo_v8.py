@@ -76,7 +76,7 @@ class Yolo_Dect:
 
             self.color_image = cv2.cvtColor(self.color_image, cv2.COLOR_BGR2RGB)
 
-            results = self.model(self.color_image, show=False, conf=0.3)
+            results = self.model(self.color_image, show=False, conf=0.3, verbose=False)
 
             self.dectshow(results, image.height, image.width)
 
