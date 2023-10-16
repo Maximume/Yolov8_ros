@@ -12,10 +12,10 @@ from std_msgs.msg import Header
 from sensor_msgs.msg import Image
 from yolov8_ros_msgs.msg import BoundingBox, BoundingBoxes
 
+from std_msgs.msg import Bool
 
 class Yolo_Dect:
     def __init__(self):
-
         # load parameters
         weight_path = rospy.get_param('~weight_path', '')
         image_topic = rospy.get_param(
@@ -41,9 +41,16 @@ class Yolo_Dect:
         # Load class color
         self.classes_colors = {}
 
+        # obstacle bool
+        self.is_obstacle = False
+
         # image subscribe
         self.color_sub = rospy.Subscriber(image_topic, Image, self.image_callback,
                                           queue_size=1, buff_size=52428800)
+        
+        # obstacle subscribe
+        self.obstacle_sub = rospy.Subscriber('/obstacle_scan', Bool, self.obstacle_callback,
+                                              queue_size=1)
 
         # output publishers
         self.position_pub = rospy.Publisher(
@@ -57,27 +64,35 @@ class Yolo_Dect:
             rospy.loginfo("waiting for image.")
             rospy.sleep(2)
 
+
     def image_callback(self, image):
+        if self.is_obstacle:
+            self.boundingBoxes = BoundingBoxes()
+            self.boundingBoxes.header = image.header
+            self.boundingBoxes.image_header = image.header
+            self.getImageStatus = True
+            self.color_image = np.frombuffer(image.data, dtype=np.uint8).reshape(
+                image.height, image.width, -1)
 
-        self.boundingBoxes = BoundingBoxes()
-        self.boundingBoxes.header = image.header
-        self.boundingBoxes.image_header = image.header
-        self.getImageStatus = True
-        self.color_image = np.frombuffer(image.data, dtype=np.uint8).reshape(
-            image.height, image.width, -1)
+            self.color_image = cv2.cvtColor(self.color_image, cv2.COLOR_BGR2RGB)
 
-        self.color_image = cv2.cvtColor(self.color_image, cv2.COLOR_BGR2RGB)
+            results = self.model(self.color_image, show=False, conf=0.3)
 
-        results = self.model(self.color_image, show=False, conf=0.3)
+            self.dectshow(results, image.height, image.width)
 
-        self.dectshow(results, image.height, image.width)
+            cv2.waitKey(3)
 
-        cv2.waitKey(3)
+
+    def obstacle_callback(self, data):
+        if data.data == True:
+            self.is_obstacle = True
+        else:
+            self.is_obstacle = False
+
 
     def dectshow(self, results, height, width):
-
         self.frame = results[0].plot()
-        print(str(results[0].speed['inference']))
+        # print(str(results[0].speed['inference']))
         fps = 1000.0/ results[0].speed['inference']
         cv2.putText(self.frame, f'FPS: {int(fps)}', (20,50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2, cv2.LINE_AA)
 
@@ -95,6 +110,7 @@ class Yolo_Dect:
 
         if self.visualize :
             cv2.imshow('YOLOv8', self.frame)
+
 
     def publish_image(self, imgdata, height, width):
         image_temp = Image()
@@ -116,5 +132,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()
