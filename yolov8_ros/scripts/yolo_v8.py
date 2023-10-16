@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import cv2
-import torch
 import rospy
 import numpy as np
 from ultralytics import YOLO
-from time import time
 
 from std_msgs.msg import Header
 from sensor_msgs.msg import Image
@@ -25,7 +22,6 @@ class Yolo_Dect:
         conf = rospy.get_param('~conf', '0.5')
         self.visualize = rospy.get_param('~visualize', 'True')
 
-        # which device will be used
         if (rospy.get_param('/use_cpu', 'false')):
             self.device = 'cpu'
         else:
@@ -41,23 +37,14 @@ class Yolo_Dect:
         # Load class color
         self.classes_colors = {}
 
-        # obstacle bool
         self.is_obstacle = False
 
-        # image subscribe
-        self.color_sub = rospy.Subscriber(image_topic, Image, self.image_callback,
-                                          queue_size=1, buff_size=52428800)
-        
-        # obstacle subscribe
-        self.obstacle_sub = rospy.Subscriber('/obstacle_scan', Bool, self.obstacle_callback,
-                                              queue_size=1)
+        self.color_sub = rospy.Subscriber(image_topic, Image, self.image_callback, queue_size=1, buff_size=52428800)
+        self.obstacle_sub = rospy.Subscriber('/obstacle_scan', Bool, self.obstacle_callback, queue_size=1)
 
         # output publishers
-        self.position_pub = rospy.Publisher(
-            pub_topic,  BoundingBoxes, queue_size=1)
-
-        self.image_pub = rospy.Publisher(
-            '/yolov8/detection_image',  Image, queue_size=1)
+        self.position_pub = rospy.Publisher(pub_topic,  BoundingBoxes, queue_size=1)
+        self.image_pub = rospy.Publisher('/yolov8/detection_image',  Image, queue_size=1)
 
         # if no image messages
         while (not self.getImageStatus):
@@ -66,11 +53,11 @@ class Yolo_Dect:
 
 
     def image_callback(self, image):
+        self.getImageStatus = True
         if self.is_obstacle:
             self.boundingBoxes = BoundingBoxes()
             self.boundingBoxes.header = image.header
             self.boundingBoxes.image_header = image.header
-            self.getImageStatus = True
             self.color_image = np.frombuffer(image.data, dtype=np.uint8).reshape(
                 image.height, image.width, -1)
 
