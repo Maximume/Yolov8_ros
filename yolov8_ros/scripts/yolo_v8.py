@@ -11,6 +11,8 @@ from yolov8_ros_msgs.msg import BoundingBox, BoundingBoxes
 
 from std_msgs.msg import Bool
 
+STOP_OBJECT_LIST = ["stop sign"]
+
 class Yolo_Dect:
     def __init__(self):
         # load parameters
@@ -45,6 +47,7 @@ class Yolo_Dect:
         # output publishers
         self.position_pub = rospy.Publisher(pub_topic,  BoundingBoxes, queue_size=1)
         self.image_pub = rospy.Publisher('/yolov8/detection_image',  Image, queue_size=1)
+        self.obstacle_pub = rospy.Publisher('/yolov8/obstacle_stop',  Bool, queue_size=1)
 
         # if no image messages
         while (not self.getImageStatus):
@@ -65,6 +68,7 @@ class Yolo_Dect:
 
             results = self.model(self.color_image, show=False, conf=0.3, verbose=False)
 
+            self.obstacle_classify(results)
             self.dectshow(results, image.height, image.width)
 
             cv2.waitKey(3)
@@ -75,6 +79,21 @@ class Yolo_Dect:
             self.is_obstacle = True
         else:
             self.is_obstacle = False
+
+
+    def obstacle_classify(self, results):
+        self.obstacle_bool = Bool()
+
+        for result in results[0].boxes:
+            cls = results[0].names[result.cls.item()]
+            if cls in STOP_OBJECT_LIST:
+                self.obstacle_bool.data = True
+                self.obstacle_pub.publish(self.obstacle_bool)
+                print("True")
+                return
+        self.obstacle_bool.data = False
+        self.obstacle_pub.publish(self.obstacle_bool)
+        print("False")
 
 
     def dectshow(self, results, height, width):
