@@ -11,7 +11,9 @@ from yolov8_ros_msgs.msg import BoundingBox, BoundingBoxes
 
 from std_msgs.msg import Bool
 
-STOP_OBJECT_LIST = ["stop sign"]
+# STOP_OBJECT_LIST = ['Tikus', 'object', 'shoes', 'sneaker']
+STOP_OBJECT_LIST = ['object', 'shoes', 'sneaker']
+
 
 class Yolo_Dect:
     def __init__(self):
