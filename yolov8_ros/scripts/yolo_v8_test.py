@@ -35,12 +35,12 @@ class Yolo_Dect:
 
         self.model.conf = conf
         self.color_image = Image()
-        self.getImageStatus = False
+        self.getImageStatus = True
 
         # Load class color
         self.classes_colors = {}
 
-        self.is_obstacle = False
+        self.is_obstacle = True
 
         self.color_sub = rospy.Subscriber(image_topic, Image, self.image_callback, queue_size=1, buff_size=52428800)
         self.obstacle_sub = rospy.Subscriber('/obstacle_scan', Bool, self.obstacle_callback, queue_size=1)
@@ -90,11 +90,11 @@ class Yolo_Dect:
             if cls in STOP_OBJECT_LIST:
                 self.obstacle_bool.data = True
                 self.obstacle_pub.publish(self.obstacle_bool)
-                # print("True")
+                print("True")
                 return
         self.obstacle_bool.data = False
         self.obstacle_pub.publish(self.obstacle_bool)
-        # print("False")
+        print("False")
 
 
     def dectshow(self, results, height, width):
