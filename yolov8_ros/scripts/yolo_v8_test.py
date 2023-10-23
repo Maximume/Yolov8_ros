@@ -87,7 +87,7 @@ class Yolo_Dect:
 
 
 def main():
-    rospy.init_node('yolov8_ros', anonymous=True)
+    rospy.init_node('yolov8_ros_test', anonymous=True)
     yolo_dect = Yolo_Dect()
     rospy.spin()
 
