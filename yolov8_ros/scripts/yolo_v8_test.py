@@ -62,15 +62,13 @@ class Yolo_Dect:
             self.color_image = cv2.cvtColor(self.color_image, cv2.COLOR_BGR2RGB)
 
             modified_image = np.copy(self.color_image)
-            # modified_image[:, :blackout_width, :] = [0, 0, 0] #left side
-            # modified_image[:, -blackout_width:, :] = [0, 0, 0] #right side
             blackout_top = 200
             blackout_bot = 80
             height = self.color_image.shape[0]
             for height_idx in range(height):
                 blackout_width = int(blackout_top - ((blackout_top - blackout_bot)*height_idx/height))
-                modified_image[height_idx, :blackout_width, :] = [255, 0, 0]
-                modified_image[height_idx, -blackout_width:, :] = [255, 0, 0]
+                modified_image[height_idx, :blackout_width, :] = [121, 131, 248]
+                modified_image[height_idx, -blackout_width:, :] = [121, 131, 248]
 
             results = self.model(modified_image, show=False, conf=self.model.conf, verbose=False)
 
